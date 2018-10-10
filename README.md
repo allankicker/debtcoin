@@ -1,6 +1,4 @@
-# debtcoin (la monnaie forcitycienne)
-
-Ou piece dette en français.
+# debtcoin (piece-dette en français ^^).
 
 ## Principe
 
