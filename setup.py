@@ -27,7 +27,7 @@ setup(
 
     packages=find_packages(exclude=['test']),  # Required
 
-    install_requires=['pycrypto'],
+    install_requires=['Pycryptodome'],
     
     use_scm_version=True,
 
