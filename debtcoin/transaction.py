@@ -94,13 +94,23 @@ def _check_tx_data(tx_data):
     if len(tx_data[2]) != 8:
         raise ValueError("tx_id must be len 8 int")
 
+def _to_string(tx_data):
+    tx_str = ""
+    for item in tx_data:
+        tx_str += item
+    return tx_str
+
+def _from_string(tx_str):
+    # TODO
+    pass
+
 
 def pay(sender_privkey_path, tx_data):
     """
     transaction script (ordered list):
     [
-        sender_addr,    # 33 bits ascii
-        receiver_addr,  # 33 bits ascii
+        sender_addr,    # len 33 ascii
+        receiver_addr,  # len 33 ascii
         amount,         # 16 digits size with padding zeroes, with 2 digits after comma float, ex : 0000000000001.00
         sender_pub,     # sender pub (128 bits ascii)
         tx_id           # 8 digits int
