@@ -24,10 +24,12 @@ setup(
     description='debtcoin project',  # Required
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown', 
-
+    setup_requires=["setuptools_scm"],
     packages=find_packages(exclude=['test']),  # Required
 
-    install_requires=['Pycryptodome'],
+    install_requires=[
+        'ecdsa',
+        'pycryptodome'],
     
     use_scm_version=True,
 
