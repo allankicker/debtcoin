@@ -34,6 +34,6 @@ setup(
     use_scm_version=True,
 
     extras_require={
-        'test': 'pytest'
+        'test': ['pytest', 'pytest-cov'],
         },
 )
