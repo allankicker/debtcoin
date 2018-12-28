@@ -9,7 +9,7 @@ import codecs
 ADDR_SIZE = 45
 AMOUNT_SIZE = 16
 TXID_SIZE = 8
-PUB_SIZE = 90
+PUB_SIZE = 128
 
 def hex_to_base64(hex_bs):
     decoded = codecs.decode(hex_bs, "hex")
@@ -97,7 +97,7 @@ def _format_float(value_str):
     return b"%016.2f" % (float(value_str))
 
 
-def _check_tx_data(tx_data):
+def check_tx_data(tx_data):
     sender_addr = tx_data[0]
     receiver_addr = tx_data[1]
     amount = tx_data[2]
@@ -115,7 +115,7 @@ def _check_tx_data(tx_data):
     except ValueError:
         raise ValueError("amount must be a valid float as a string")
     if len(tx_id) != TXID_SIZE:
-        raise ValueError("tx_id must be len %s 8 int" % (TXID_SIZE))
+        raise ValueError("tx_id must be len %s int" % (TXID_SIZE))
     if (len(sender_pub)) != PUB_SIZE:
         raise ValueError("pub keys must be %s length base64 string" % (PUB_SIZE))
 
@@ -145,10 +145,10 @@ def sign(privkey, tx_data):
     tx_data contain [receiver_addr, amount, tx_id]
     Final transaction script is an ordered list :
     [
-        sender_addr,    # len 33 ascii
-        receiver_addr,  # len 33 ascii
+        sender_addr,    # len 33 base64
+        receiver_addr,  # len 33 base64
         amount,         # 16 digits size with padding zeroes, with 2 digits after comma float, ex : 0000000000001.00
-        sender_pub,     # sender pub (128 bits ascii)
+        sender_pub,     # sender pub (len 128 base64 strings)
         tx_id           # 8 digits int
         transaction_sig # len 90 
     ]
