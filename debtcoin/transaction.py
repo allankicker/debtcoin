@@ -9,7 +9,8 @@ import codecs
 ADDR_SIZE = 45
 AMOUNT_SIZE = 16
 TXID_SIZE = 8
-PUB_SIZE = 128
+PUB_SIZE = 90
+
 
 def hex_to_base64(hex_bs):
     decoded = codecs.decode(hex_bs, "hex")
@@ -21,12 +22,20 @@ def base64_to_hex(b64_bs):
     return codecs.encode(decoded, "hex")
 
 
+def sig_to_base64(sig_bs):
+    return hex_to_base64(hexlify(sig_bs))
+
+
+def sig_from_base64(b64_bs):
+    return unhexlify(base64_to_hex(b64_bs))
+
+
 def priv_from_b64(b64_bs):
     return ecdsa.SigningKey.from_string(unhexlify(base64_to_hex(b64_bs)), curve=ecdsa.SECP256k1)
 
 
 def pub_from_b64(b64_bs):
-    return ecdsa.SigningKey.from_string(unhexlify(base64_to_hex(b64_bs)), curve=ecdsa.SECP256k1)
+    return ecdsa.VerifyingKey.from_string(unhexlify(base64_to_hex(b64_bs)), curve=ecdsa.SECP256k1)
 
 
 def new_couple_key():
@@ -72,11 +81,6 @@ def sign_with_file(transaction, keyfilepath):
     return sig
 
 
-def sign(transaction, privkey):
-    sk = ecdsa.SigningKey.from_string(priv_from_b64(privkey))
-    return sk.sign(transaction)
-
-
 def verify(tx_hash, key):
     verifier = DSS.new(key, 'fips-186-3')
     try:
@@ -106,7 +110,7 @@ def check_tx_data(tx_data):
 
     if len(tx_data) != 5:
         raise ValueError("tx_data must be a 5 items list")
-    if len(sender_addr) != ADDR_SIZE or len(receiver_addr) != ADDR_SIZE :
+    if len(sender_addr) != ADDR_SIZE or len(receiver_addr) != ADDR_SIZE:
         raise ValueError("addr must be %s length hex string" % (ADDR_SIZE))
     if len(amount) != AMOUNT_SIZE:
         raise ValueError("amount must be %s length hex string" % (AMOUNT_SIZE))
@@ -118,6 +122,14 @@ def check_tx_data(tx_data):
         raise ValueError("tx_id must be len %s int" % (TXID_SIZE))
     if (len(sender_pub)) != PUB_SIZE:
         raise ValueError("pub keys must be %s length base64 string" % (PUB_SIZE))
+
+
+def check_sig(tx_data, sig):
+    check_tx_data(tx_data)
+    if len(sig) != 90:
+        raise ValueError("signature must be a base64 bytes string of length 90")
+    vk = pub_from_b64(tx_data[3])
+    return vk.verify(sig_from_base64(sig), tx_to_string(tx_data))
 
 
 def tx_to_string(tx_data):
@@ -150,13 +162,11 @@ def sign(privkey, tx_data):
         amount,         # 16 digits size with padding zeroes, with 2 digits after comma float, ex : 0000000000001.00
         sender_pub,     # sender pub (len 128 base64 strings)
         tx_id           # 8 digits int
-        transaction_sig # len 90 
+        transaction_sig # len 90 base64
     ]
     sender_addr, sender_pub and transaction_sig are computed from sender_privkey_path
     """
-    _check_tx_data(tx_data)
+    check_tx_data(tx_data)
     unsig_script_b = tx_to_string(tx_data)
     sk = priv_from_b64(privkey)
-    sig = sk.sign(unsig_script_b)
-    tx_data.append(sig)
-    return tx_data
+    return sk.sign(unsig_script_b)

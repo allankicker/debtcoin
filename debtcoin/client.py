@@ -1,43 +1,49 @@
 import sqlite3
 from contextlib import contextmanager
-from debtcoin.transaction import check_tx_data
+from debtcoin.transaction import check_sig
 
-TABLE = ''' 
+TABLE_CREATE_QUERY = ''' 
         CREATE TABLE IF NOT EXISTS tx 
         (senderaddr BLOB check(length(senderaddr) == 33), 
-        receiveraddr CHARACTER(33) check(length(receivderaddr) == 33), 
+        receiveraddr BLOB check(length(receiveraddr) == 33), 
         amount FLOAT check(amount > 0), 
-        senderpub CHARACHTER(128) check(length(senderpub) == 128), 
+        senderpub BLOB check(length(senderpub) == 128), 
         txid SMALLINT,
-        UNIQUE(senderaddr, receiveraddr, amount, txid)
-        sig CHARACTER(90) check(length(sig) == 90)) 
+        sig BLOB check(length(sig) == 90),
+        UNIQUE(senderaddr, receiveraddr, amount, txid))
         '''
 
+INPUTS_QUERY = '''select sum(amount) from tx where receiveraddr = ?'''
+OUTPUTS_QUERY = '''select sum(amount) from tx where senderaddr = ?'''
+
+
 @contextmanager
-def cursor():
-    conn = sqlite3.connect('transactions.db')
+def cursor(db_file='transactions.db'):
+    conn = sqlite3.connect(db_file)
     curs = conn.cursor()
     yield curs
     conn.commit()
     conn.close()
 
+
 def init_table(curs):
-    curs.execute(TABLE)
+    curs.execute(TABLE_CREATE_QUERY)
 
 
-def store(tx_data):
-    check_tx_data(tx_data)
+def store(curs, tx_data, sig):
+    check_sig(tx_data, sig)
     db_data = (
         tx_data[0],
         tx_data[1],
         float(tx_data[2]),
         tx_data[3],
         int(tx_data[4]),
-        tx_data[5],
+        sig,
     )
-    with cursor() as cur:
-        cur.execute('INSERT INTO tx VALUES(?,?,?,?,?,?)', [db_data])
+    curs.execute('INSERT INTO tx VALUES(?,?,?,?,?,?)', db_data)
 
 
-
-
+def balance(cursor, addr):
+    inputs = cursor.execute(INPUTS_QUERY, addr).fetchone[0]
+    outputs = cursor.execute(OUTPUTS_QUERY, addr).fetchone[0]
+    return inputs - outputs
