@@ -4,10 +4,10 @@ from debtcoin.transaction import check_sig
 
 TABLE_CREATE_QUERY = ''' 
         CREATE TABLE IF NOT EXISTS tx 
-        (senderaddr BLOB check(length(senderaddr) == 33), 
-        receiveraddr BLOB check(length(receiveraddr) == 33), 
+        (senderaddr BLOB check(length(senderaddr) == 45), 
+        receiveraddr BLOB check(length(receiveraddr) == 45), 
         amount FLOAT check(amount > 0), 
-        senderpub BLOB check(length(senderpub) == 128), 
+        senderpub BLOB check(length(senderpub) == 90), 
         txid SMALLINT,
         sig BLOB check(length(sig) == 90),
         UNIQUE(senderaddr, receiveraddr, amount, txid))
@@ -43,7 +43,7 @@ def store(curs, tx_data, sig):
     curs.execute('INSERT INTO tx VALUES(?,?,?,?,?,?)', db_data)
 
 
-def balance(cursor, addr):
-    inputs = cursor.execute(INPUTS_QUERY, addr).fetchone[0]
-    outputs = cursor.execute(OUTPUTS_QUERY, addr).fetchone[0]
+def balance(curs, addr):
+    inputs = curs.execute(INPUTS_QUERY, (addr,)).fetchone()[0]
+    outputs = curs.execute(OUTPUTS_QUERY, (addr,)).fetchone()[0]
     return inputs - outputs
